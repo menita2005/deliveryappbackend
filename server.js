@@ -1,5 +1,7 @@
 const express = require('express');
 
+const passport = require('passport');
+
 const app = express();
 
 const http = require('http');
@@ -10,39 +12,73 @@ const logger = require('morgan');
 
 const cors = require('cors');
 
+/**
+
+* Importar rutas
+
+*/
+
+const usersRoutes = require('./routes/userRoutes');
+
 const port = process.env.PORT || 3000;
 
-app.use(logger('dev'));
+app.use(logger('dev')); // log requests to the console DEBUG
 
-app.use(express.json());
+app.use(express.json()); // support json encoded bodies
 
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({
+
+extended: true
+
+})); // support encoded bodies
 
 app.use(cors());
 
-app.disable('x-powered-by');
+app.use(passport.initialize());
+
+app.use(passport.session());
+
+require('./config/passport')(passport);
+
+app.disable('x-powered-by'); // disable the X-Powered-By header in responses
 
 app.set('port', port);
 
-//direccion ip V4 de la maquina, consultar con ipconfig
+/**
 
-server.listen(3000, '192.168.1.96' || 'localhost', function() {
+* Llamar a las rutas
 
-console.log('Aplicación de NodeJS ' + process.pid + ' inicio en el puerto ' + port);
+*/
+
+usersRoutes(app);
+
+// Iniciar el servidor
+
+server.listen(port, '192.168.0.4' || 'localhost', function() {
+
+console.log('App Node.js ' + process.pid + ' ejecutando en ' + server.address().address + ':' + server.address().port);
 
 });
+
+/** RUTAS ***********************************************/
 
 app.get('/', (req, res) => {
 
-res.send('Ruta raiz del Backend');
+res.send('Estas en la ruta raiz del backend.');
 
 });
 
-//Error handler
+app.get('/test', (req, res) => {
+
+res.send('Estas en la ruta TEST');
+
+});
+
+//Manejo de errores ******************************************
 
 app.use((err, req, res, next) => {
 
-console.log(err);
+console.error(err);
 
 res.status(err.status || 500).send(err.stack);
 

@@ -1,12 +1,80 @@
-const mysql = require('../config/config');
+const db = require('../config/config');
+
+const bcrypt = require('bcryptjs');
 
 const User = {};
 
-User.create = (user, result) => {
+User.findById = (id, result) => {
 
-const sql = `
+const sql = `SELECT id, email, name, lastname, image, password FROM users WHERE id = ?`;
 
-INSERT INTO users(
+db.query(sql,
+
+[id], (err, user) => {
+
+if (err) {
+
+console.log('Error al consultar: ', err);
+
+result(err, null);
+
+}
+
+else {
+
+console.log('Usuario consultado: ', user[0] );
+
+result(null, user[0]);
+
+}
+
+}
+
+);
+
+}
+
+User.findByEmail = (email, result) => {
+
+const sql = `SELECT id, email, name, lastname, image, phone, password FROM users WHERE email = ?`;
+
+db.query(
+
+sql,
+
+[email],
+
+(err, user) => {
+
+if (err) {
+
+console.log('Error al consultar: ', err);
+
+result(err, null);
+
+}
+
+else {
+
+console.log('Usuario consultado: ', user[0] );
+
+result(null, user[0]);
+
+}
+
+}
+
+);
+
+}
+
+User.create = async (user, result) => {
+
+const hash = await bcrypt.hash(user.password, 10);
+
+const sql =
+
+`INSERT INTO users (
 
 email,
 
@@ -26,13 +94,9 @@ updated_at
 
 )
 
-VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
 
-;
-
-db.query(
-
-sql,
+db.query(sql,
 
 [
 
@@ -46,19 +110,17 @@ user.phone,
 
 user.image,
 
-user.password,
+hash,
 
 new Date(),
 
 new Date()
 
-],
-
-(err, res) => {
+], (err, res) => {
 
 if (err) {
 
-console.log('error: ', err);
+console.log('Error al crear el usuario: ', err);
 
 result(err, null);
 
@@ -66,16 +128,16 @@ result(err, null);
 
 else {
 
-console.log('Id del nuevo Usuario: ', res.insertId);
+console.log('Usuario creado: ', { id: res.insertId, ...user });
 
-result(null, res.insertId);
-
-}
+result(null, { id: res.insertId, ...user });
 
 }
 
-)
+}
 
-};
+);
+
+}
 
 module.exports = User;
